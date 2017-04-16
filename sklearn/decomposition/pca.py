@@ -17,6 +17,17 @@ from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
 
+# Try to get the SVD through direct API to lapack:
+try:
+    from scipy.linalg.lapack import sgesvd as svd
+    svd_args = [1, 0]
+# If you have an older version of scipy, we fall back
+# on the standard scipy SVD API:
+except ImportError:
+    from scipy.linalg import svd
+    svd_args = [False]
+
+
 from ..externals import six
 
 from .base import _BasePCA
@@ -409,7 +420,7 @@ class PCA(_BasePCA):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, V = linalg.svd(X, full_matrices=False)
+        U, S, V = svd(X, *svd_args)[:3]
         # flip eigenvectors' sign to enforce deterministic output
         U, V = svd_flip(U, V)
 
